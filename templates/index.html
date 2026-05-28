@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neo LM</title>
+
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/style.css') }}">
+</head>
+<body>
+     <div class ='container'>
+        <h1>Neo LM</h1>
+        <div id="chat-box">
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Ask me something...">
+            <button id="send-btn">
+                Send
+            </button>
+        </div>
+     </div>
+     <div class="upload-area">
+        <input type="file" id="pdf-file" accept=".pdf">
+        <button id="upload-btn">
+            Upload PDF
+        </button>
+     </div>
+
+     <script src="{{ ( url_for('static', filename='js/script.js'))}}"></script>
+</body>
+</html>
