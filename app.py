@@ -3,7 +3,6 @@ from reg_engine import ask_question
 import os
 import subprocess
 from database import db, ChatMessage
-import uuid
 
 app =Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chat_history.db'
@@ -25,12 +24,13 @@ def chat():
     response = ask_question(user_message)
 
     chat_message = ChatMessage(user_message=user_message,
-                              bot_response=response,
+                              bot_response=response["answer"],
                               )
     db.session.add(chat_message)
     db.session.commit()
     return jsonify({
-        "response": response
+        "response": response["answer"],
+        "sources": response["sources"]
     })
 
 @app.route("/upload", methods=["POST"])

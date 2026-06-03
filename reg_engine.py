@@ -1,6 +1,7 @@
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_ollama import OllamaLLM
+import os
 
 embedding_function = HuggingFaceEmbeddings(
     model_name="all-MiniLM-L6-v2"
@@ -17,6 +18,15 @@ def ask_question(query):
 
     # Retrieve relevant chunks
     results = db.similarity_search(query, k=8)
+
+    sources=[]
+    for doc in results:
+        source = doc.metadata.get("source","Unknown")
+        page = doc.metadata.get("page_label", 0)
+        filename=os.path.basename(source)
+        sources.append(f"{filename} (Page {page})")
+        sources=list(set(sources))
+
 
     # Combine retrieved chunks
     context = "\n\n".join(
@@ -46,7 +56,8 @@ def ask_question(query):
     # Generate answer
     response = llm.invoke(prompt)
     
-
-
-    return response
+    return {
+        "answer": response,
+        "sources": sources
+    }
 
