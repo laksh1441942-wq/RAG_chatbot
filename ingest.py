@@ -38,6 +38,9 @@ for pdf_file in pdf_files:
     else:
         documents.extend(pdf_pages)
 
+for doc in documents:
+    print(doc.metadata)
+
 
 # Split text into chunks
 splitter = RecursiveCharacterTextSplitter(
@@ -46,6 +49,8 @@ splitter = RecursiveCharacterTextSplitter(
 )
 
 chunks = splitter.split_documents(documents)
+
+print(f"Total Chunks Created: {len(chunks)}")
 
 db=Chroma.from_documents(
     chunks,
