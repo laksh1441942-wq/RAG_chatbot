@@ -17,7 +17,19 @@ llm = OllamaLLM(model="llama3")
 def ask_question(query):
 
     # Retrieve relevant chunks
-    results = db.similarity_search(query, k=8)
+    retriever = db.as_retriever(
+    search_type="mmr",
+    search_kwargs={"k": 8, "fetch_k": 30}
+)
+
+    results = retriever.invoke(query)
+
+    print("\n========== RETRIEVED DOCS ==========\n")
+
+    for doc in results:
+        print(doc.metadata)
+        print(doc.page_content[:200])
+        print("----------------------------------")
 
     sources=[]
     for doc in results:
@@ -25,7 +37,9 @@ def ask_question(query):
         page = doc.metadata.get("page_label", 0)
         filename=os.path.basename(source)
         sources.append(f"{filename} (Page {page})")
-        sources=list(set(sources))
+    sources=list(set(sources))
+    sources = sources[:3]
+
 
 
     # Combine retrieved chunks
@@ -35,14 +49,18 @@ def ask_question(query):
 
     # Create prompt
     prompt = f"""
-    You are a helpful assistant.
+    You are a RAG assistant.
 
-    Use ONLY the provided context.
+    Answer ONLY from the provided context.
 
-    If the answer is not found in the context,
-    say:
+    Rules:
+    1. Give short direct answers for factual questions.
+    2. Use at most 1-2 sentences unless the user asks for details.
+    3. You may make simple logical inferences from the context.
+    4. Do not explain your reasoning unless asked.
+    5. If the answer is not in the context, respond exactly:
 
-    "I could not find this information in the uploaded documents."
+    I could not find this information in the uploaded documents.
 
     Context:
     {context}
@@ -55,6 +73,10 @@ def ask_question(query):
 
     # Generate answer
     response = llm.invoke(prompt)
+
+    print("\n========== CONTEXT ==========\n")
+    print(context[:3000])
+    print("\n=============================\n")
     
     return {
         "answer": response,

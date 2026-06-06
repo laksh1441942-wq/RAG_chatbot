@@ -10,9 +10,20 @@
 <body>
      <div class ='container'>
         <h1>Neo LM</h1>
-        <div id="chat-box">
+        <div class="main-layout">
+            <div class="sidebar">
+                <h3>📄 Uploaded Files</h3>
+                <div id="file-list">
+                </div>
+                <input type="file" id="pdf-file" accept=".pdf">
+                <button id="upload-btn">
+                    Upload PDF
+                </button>
+            </div>
+            <div class="chat-section">
+                <div id="chat-box"></div>
+            </div>
         </div>
-
         <div class="input-area">
             <input type="text" id="user-input" placeholder="Ask me something...">
             <button id="send-btn">
@@ -20,13 +31,6 @@
             </button>
         </div>
      </div>
-     <div class="upload-area">
-        <input type="file" id="pdf-file" accept=".pdf">
-        <button id="upload-btn">
-            Upload PDF
-        </button>
-     </div>
-
      <script src="{{ ( url_for('static', filename='js/script.js'))}}"></script>
 </body>
 </html>

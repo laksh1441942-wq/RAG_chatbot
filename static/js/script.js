@@ -26,9 +26,23 @@ async function sendMessage(){
                 message: message
             })
         });
+        
         const data = await response.json();
+        console.log(data);
         typingDiv.remove();
-        addMessage(data.response, "bot");
+
+        const botDiv = addMessage(data.response, "bot");
+
+        if (data.sources && data.sources.length > 0) {
+            const sourceDiv = document.createElement("div");
+            sourceDiv.classList.add("source-list");
+
+            sourceDiv.innerHTML =
+                "<strong>Sources:</strong><br>" +
+                data.sources.join("<br>");
+
+            chatBox.appendChild(sourceDiv);
+        }
 
     }
 
@@ -44,6 +58,7 @@ async function uploadPDF(){
         method: "POST",
         body: formData
     });
+    //console.log(await response.text());
     const data = await response.json();
     alert(data.message);
 }

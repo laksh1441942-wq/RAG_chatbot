@@ -3,6 +3,7 @@ from reg_engine import ask_question
 import os
 import subprocess
 from database import db, ChatMessage
+import sys
 
 app =Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chat_history.db'
@@ -39,7 +40,8 @@ def upload():
     save_path =os.path.join("data", file.filename)
     file.save(save_path)
     # Trigger the ingestion process
-    subprocess.run(['python', 'ingest.py', save_path])
+    subprocess.run([
+        sys.executable,'ingest.py',save_path], check=True)
 
     return jsonify({
         "message": "PDF uploaded successfully!"
