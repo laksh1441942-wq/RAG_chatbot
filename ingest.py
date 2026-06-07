@@ -11,14 +11,19 @@ from langchain_community.document_loaders import PyPDFLoader
 
 from pdf2image import convert_from_path
 import pytesseract
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Embedding model
 embedding_function = HuggingFaceEmbeddings(
     model_name="all-MiniLM-L6-v2"
 )
 
-if os.path.exists("chroma_db"):
-    shutil.rmtree("chroma_db")
+chroma_db_path = os.getenv("CHROMA_DB_PATH", 'chroma_db')
+
+if os.path.exists(chroma_db_path):
+    shutil.rmtree(chroma_db_path)
 
 documents= []
 pdf_path = sys.argv[1]
@@ -60,7 +65,7 @@ for chunk in chunks:
 db=Chroma.from_documents(
     chunks,
     embedding_function,
-    persist_directory="chroma_db"
+    persist_directory=chroma_db_path
 )
 
 

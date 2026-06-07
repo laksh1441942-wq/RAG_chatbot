@@ -2,17 +2,22 @@ from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_ollama import OllamaLLM
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+llm = OllamaLLM(model=os.getenv('OLLAMA_MODEL','llama3'))
 
 embedding_function = HuggingFaceEmbeddings(
     model_name="all-MiniLM-L6-v2"
 )
+
+chroma_db_path = os.getenv('CHROMA_DB_PATH', 'chroma_db')
+
 db = Chroma(
-        persist_directory="chroma_db",
+        persist_directory=chroma_db_path,
         embedding_function=embedding_function
     )
-
-    # Load Ollama model
-llm = OllamaLLM(model="llama3")
 
 def ask_question(query):
 
