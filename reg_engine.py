@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-llm = OllamaLLM(model=os.getenv('OLLAMA_MODEL','llama3'))
+llm = OllamaLLM(model=os.getenv('OLLAMA_MODEL','neural-chat'))
 
 embedding_function = HuggingFaceEmbeddings(
     model_name="all-MiniLM-L6-v2"
@@ -21,29 +21,31 @@ db = Chroma(
 
 def ask_question(query):
 
-    # Retrieve relevant chunks
+    # Retrieve relevant chunks - optimized for accuracy
     retriever = db.as_retriever(
-    search_type="mmr",
-    search_kwargs={"k": 8, "fetch_k": 30}
-)
+        search_type="mmr",
+        search_kwargs={"k": 5, "fetch_k": 25}
+    )
 
     results = retriever.invoke(query)
 
-    print("\n========== RETRIEVED DOCS ==========\n")
-
-    for doc in results:
-        print(doc.metadata)
-        print(doc.page_content[:200])
-        print("----------------------------------")
-
-    sources=[]
-    for doc in results:
+    # Only extract sources from top 2 most relevant chunks
+    top_results = results[:2]
+    
+    sources = []
+    for doc in top_results:
         source = doc.metadata.get("source","Unknown")
-        page = doc.metadata.get("page_label", 0)
+        page = doc.metadata.get("page_label") or doc.metadata.get("page")
         filename=os.path.basename(source)
-        sources.append(f"{filename} (Page {page})")
-    sources=list(set(sources))
-    sources = sources[:3]
+        
+        # Only add page number if it exists and is not None
+        if page is not None:
+            source_str = f"{filename} (Page {page})"
+        else:
+            source_str = filename
+            
+        if source_str not in sources:
+            sources.append(source_str)
 
 
 
@@ -52,36 +54,26 @@ def ask_question(query):
         [result.page_content for result in results]
     )
 
-    # Create prompt
-    prompt = f"""
-    You are a RAG assistant.
+    # Create prompt with clear instructions
+    prompt = f"""You are a RAG assistant. Your job is to answer questions ONLY from the provided context.
 
-    Answer ONLY from the provided context.
+RULES (Follow strictly):
+1. Answer ONLY from the provided context - do not use external knowledge
+2. If the answer is not in the context, respond: "I could not find this information in the uploaded documents."
+3. For factual questions: Give short, direct answers (1-2 sentences max)
+4. For complex questions: Provide more detail only if the context supports it
+5. DO NOT mention the document names or sources in your answer - they will be shown separately
+6. Do not explain your reasoning unless asked
 
-    Rules:
-    1. Give short direct answers for factual questions.
-    2. Use at most 1-2 sentences unless the user asks for details.
-    3. You may make simple logical inferences from the context.
-    4. Do not explain your reasoning unless asked.
-    5. If the answer is not in the context, respond exactly:
+CONTEXT:
+{context}
 
-    I could not find this information in the uploaded documents.
+QUESTION: {query}
 
-    Context:
-    {context}
-
-    Question:
-    {query}
-
-    Answer:
-    """
+ANSWER:"""
 
     # Generate answer
     response = llm.invoke(prompt)
-
-    print("\n========== CONTEXT ==========\n")
-    print(context[:3000])
-    print("\n=============================\n")
     
     return {
         "answer": response,

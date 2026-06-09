@@ -22,12 +22,21 @@ embedding_function = HuggingFaceEmbeddings(
 
 chroma_db_path = os.getenv("CHROMA_DB_PATH", 'chroma_db')
 
-if os.path.exists(chroma_db_path):
-    shutil.rmtree(chroma_db_path)
-
-documents= []
+# Only delete if we're processing multiple PDFs, otherwise append new documents
+documents = []
 pdf_path = sys.argv[1]
-pdf_files =glob.glob(pdf_path)
+pdf_files = glob.glob(pdf_path)
+
+# Load existing database or create new one
+try:
+    db = Chroma(
+        persist_directory=chroma_db_path,
+        embedding_function=embedding_function
+    )
+    print(f"Loaded existing database from {chroma_db_path}")
+except:
+    print(f"Creating new database at {chroma_db_path}")
+    db = None
 
 for pdf_file in pdf_files:
     loader = PyPDFLoader(pdf_file)
@@ -49,10 +58,11 @@ for pdf_file in pdf_files:
     print(pdf_file)
 print(f"Documents loaded: {len(documents)}")
 
-# Split text into chunks
+# Split text into chunks - smaller, more focused chunks
 splitter = RecursiveCharacterTextSplitter(
-    chunk_size=1000,
-    chunk_overlap=200
+    chunk_size=400,
+    chunk_overlap=100,
+    separators=["\n\n", "\n", ". ", " ", ""]
 )
 
 chunks = splitter.split_documents(documents)
@@ -62,11 +72,15 @@ print(f"Total Chunks Created: {len(chunks)}")
 for chunk in chunks:
     chunk.metadata["source"] = pdf_file
 
-db=Chroma.from_documents(
-    chunks,
-    embedding_function,
-    persist_directory=chroma_db_path
-)
-
-
-print("Database Created Successfully!")
+# Add or create database
+if db is None:
+    db = Chroma.from_documents(
+        chunks,
+        embedding_function,
+        persist_directory=chroma_db_path
+    )
+    print("Created new database successfully!")
+else:
+    # Append new documents to existing database
+    db.add_documents(chunks)
+    print(f"Added {len(chunks)} new chunks to existing database!")

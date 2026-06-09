@@ -81,11 +81,15 @@ button:hover{
     background:#333;
 }
 .source-list{
-    margin-left: 20px;
-    margin-top: 5px;
+    margin-left: 0px;
+    margin-top: 10px;
     margin-bottom: 15px;
+    padding: 10px 15px;
     color: #8fd3ff;
-    font-size: 12px;
+    font-size: 13px;
+    background: rgba(47, 79, 121, 0.3);
+    border-left: 3px solid #8fd3ff;
+    border-radius: 5px;
 }
 .sidebar{
     width:250px;
