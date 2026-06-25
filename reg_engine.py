@@ -1,12 +1,15 @@
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_ollama import OllamaLLM
+from langchain_openai import ChatOpenAI
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-llm = OllamaLLM(model=os.getenv('OLLAMA_MODEL','neural-chat'))
+llm = ChatOpenAI(model=os.getenv("NEX_AGI_MODEL", "Nex-N2-Pro"),
+                 api_key=os.getenv("LLM_API_KEY"),
+                 base_url=os.getenv("NEX_AGI_BASE_URL"),
+                 temperature=0)
 
 embedding_function = HuggingFaceEmbeddings(
     model_name="all-MiniLM-L6-v2"
@@ -55,7 +58,8 @@ def ask_question(query):
     )
 
     # Create prompt with clear instructions
-    prompt = f"""You are a RAG assistant. Your job is to answer questions ONLY from the provided context.
+    prompt = f"""You are a RAG assistant. Your job is to
+      answer questions ONLY from the provided context.
 
 RULES (Follow strictly):
 1. Answer ONLY from the provided context - do not use external knowledge
@@ -68,15 +72,17 @@ RULES (Follow strictly):
 CONTEXT:
 {context}
 
-QUESTION: {query}
+    QUESTION: {query}
 
-ANSWER:"""
+    ANSWER:"""
 
     # Generate answer
     response = llm.invoke(prompt)
     
+    answer = response.content if hasattr(response, "content") else response
+
     return {
-        "answer": response,
+        "answer": answer,
         "sources": sources
     }
 

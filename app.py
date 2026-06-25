@@ -7,6 +7,7 @@ import sys
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 import logging
+import json
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -85,7 +86,8 @@ def chat():
         })
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": "Failed to process message"}), 500
+        logger.exception("Chat route failed")
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/upload", methods=["POST"])
 def upload():
@@ -136,5 +138,27 @@ def upload():
         logger.error(f"Unexpected error in upload: {str(e)}")
         return jsonify({"error": "An unexpected error occurred"}), 500
 
+@app.route("/scheme/<scheme_name>", methods=["GET"])
+def get_scheme_name(scheme_name):
+    """
+    Returns a single scheme by name
+    GET http://localhost:5001/scheme/PMJDY
+    """
+    try:
+        with open("/Users/lakshsharma/Desktop/RAG_chatbot/data/scheme_data_clean.json", "r") as f:
+            schemes_data = json.load(f)
+        # Search through loaded schemes data
+        for scheme in schemes_data["schemes"]:
+           if scheme["slug"].lower() == scheme_name.lower():
+               return jsonify(scheme), 200
+        
+        # If no match found
+        return jsonify({"error": "Scheme not found"}), 404
+    except Exception as e:
+        logger.error(f"Error fetching scheme: {str(e)}")
+        return jsonify({"error": "An error occurred while fetching scheme data"}), 500
+
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(port=5002, debug=True)

@@ -6,6 +6,11 @@ const pdfFile = document.getElementById("pdf-file");
 
 uploadBtn.addEventListener("click", uploadPDF);
 sendBtn.addEventListener("click", sendMessage);
+document.addEventListener("keydown", (e) => {
+    if(e.key === "Enter"){
+        sendMessage();
+    }
+});
 
 async function sendMessage(){
         const message = userInput.value.trim();
@@ -31,7 +36,11 @@ async function sendMessage(){
         console.log(data);
         typingDiv.remove();
 
-        const botDiv = addMessage(data.response, "bot");
+        if(!response.ok){
+            addMessage(data.error || "Something went wrong.", "bot");
+            return;
+        }
+        addMessage(data.response, "bot");
 
         if (data.sources && data.sources.length > 0) {
             const sourceDiv = document.createElement("div");
